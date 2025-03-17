@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   key_press.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:38:04 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 14:53:36 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 15:01:09 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,6 @@ void render_map(t_game *game)
     int y;
 
     // Clear the screen (optional, depending on your MLX42 setup)
-    mlx_clear_window(game->mlx, game->win);
 
     // Loop through the map grid
     y = 0;

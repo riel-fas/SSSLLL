@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   so_long.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:18:36 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 14:30:34 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 14:58:37 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,15 +67,20 @@ typedef struct s_game
 
 
 int		parse_map(t_game *game, char *map_path);
-void	free_game(t_game *game);
 int		validate_map(t_game *game);
+
+void move_player(t_game *game, int dx, int dy);
+void handle_keypress(mlx_key_data_t keydata, void *param);
+void render_map(t_game *game);
+void init_game(t_game *game);
+
+
+void	free_game(t_game *game);
 void	exit_with_error(char *message);
 int		handle_window_close(t_game *game);
 
 
-
-
-
+void load_assets(t_game *game);
 
 
 
