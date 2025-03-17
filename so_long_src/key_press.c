@@ -6,7 +6,7 @@
 /*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:38:04 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 14:42:12 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 14:53:36 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,3 +85,43 @@ void handle_keypress(mlx_key_data_t keydata, void *param)
     }
 }
 
+void render_map(t_game *game)
+{
+    int x;
+    int y;
+
+    // Clear the screen (optional, depending on your MLX42 setup)
+    mlx_clear_window(game->mlx, game->win);
+
+    // Loop through the map grid
+    y = 0;
+    while (y < game->map.height)
+    {
+        x = 0;
+        while (x < game->map.width)
+        {
+            // Calculate pixel coordinates
+            int pixel_x = x * TILE_SIZE;
+            int pixel_y = y * TILE_SIZE;
+
+            // Draw floor first (background)
+            mlx_image_to_window(game->mlx, game->floor_img, pixel_x, pixel_y);
+
+            // Draw other tiles based on the map grid
+            if (game->map.grid[y][x] == '1')
+                mlx_image_to_window(game->mlx, game->wall_img, pixel_x, pixel_y);
+            else if (game->map.grid[y][x] == 'P')
+                mlx_image_to_window(game->mlx, game->player_img, pixel_x, pixel_y);
+            else if (game->map.grid[y][x] == 'C')
+                mlx_image_to_window(game->mlx, game->collectible_img, pixel_x, pixel_y);
+            else if (game->map.grid[y][x] == 'E')
+                mlx_image_to_window(game->mlx, game->exit_img, pixel_x, pixel_y);
+
+            x++;
+        }
+        y++;
+    }
+
+    // Debug print
+    printf("Map rendered successfully.\n");
+}
