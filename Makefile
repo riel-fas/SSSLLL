@@ -1,28 +1,30 @@
 NAME	= so_long
-CC		= cc
-CFLAGS	= -Wextra -Wall -Werror -fsanitize=address
+CFLAGS	= -Wextra -Wall -Werror
 
-LIBMLX	= /home/riad/MLX42
+# Paths for MLX42
+LIBMLX	= /Users/riel-fas/MLX42
 MLX_INCLUDE	= $(LIBMLX)/include/MLX42
 MLX_LIB	= $(LIBMLX)/build/libmlx42.a
 
-GLFW_INCLUDE = /home/linuxbrew/.linuxbrew/include
-GLFW_LIB = /home/linuxbrew/.linuxbrew/lib
+# Paths for GLFW
+GLFW_INCLUDE = /Users/riel-fas/.brew/include
+GLFW_LIB = /Users/riel-fas/.brew/lib
 
+# Include paths
 HEADERS	= -I ./include -I $(MLX_INCLUDE) -I $(GLFW_INCLUDE)
 
-LIBFT	= libft/libft.a
+# Libraries
+LIBS = $(MLX_LIB) -L $(GLFW_LIB) -lglfw -ldl -pthread -lm
 
-LIBS = $(MLX_LIB) -L $(GLFW_LIB) -lglfw -ldl -pthread -lm -fsanitize=address
-
+# Source files
 SRCS	=	so_long_src/main.c \
             so_long_src/map_pars.c \
 			so_long_src/map_valid.c \
 			so_long_src/errors_handl.c \
             libft/get_next_line/get_next_line.c \
             libft/get_next_line/get_next_line_utils.c
-
 OBJS	= ${SRCS:.c=.o}
+
 
 all: $(NAME)
 

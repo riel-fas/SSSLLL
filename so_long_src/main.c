@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:24:15 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 10:29:53 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 10:41:40 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,29 +30,7 @@
 
 // }
 // #include "your_header_file.h" // Replace with your actual header file name
-#include <stdio.h>
 
-// Forward declaration of functions
-int parse_map(t_game *game, char *map_path);
-void free_game(t_game *game);
-
-// Simple free_game implementation for testing
-void free_game(t_game *game)
-{
-    int i;
-
-    if (game->map.grid)
-    {
-        i = 0;
-        while (i < game->map.height)
-        {
-            if (game->map.grid[i])
-                free(game->map.grid[i]);
-            i++;
-        }
-        free(game->map.grid);
-    }
-}
 
 int main(int argc, char **argv)
 {
