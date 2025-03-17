@@ -6,7 +6,7 @@
 /*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:24:15 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 13:26:01 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 13:59:57 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,18 +22,6 @@ void	into_game(t_game *game)
 
 
 }
-
-// int main()
-// {
-// 	t_game game;
-
-// 	into_game(&game);
-// 	mlx_terminate(game.mlx);
-// 	return (EXIT_SUCCESS);
-
-
-
-// }
 
 int main(int ac, char **av)
 {
