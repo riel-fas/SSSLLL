@@ -6,202 +6,95 @@
 /*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:37:55 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 11:23:36 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 12:19:20 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
-// static int	map_dimensions(t_game *game, char *map_path)
-// {
-// 	int		fd;
-// 	int		width;
-// 	char	*line;
-
-// 	fd = open(map_path, O_RDONLY);
-// 	if (fd < 0)
-// 	{
-// 		write(2, "ERROR OPENING MAP FILE\n", 23);
-// 		exit(EXIT_FAILURE);
-// 	}
-// 	game->map.width = 0;
-// 	game->map.height = 0;
-// 	while ((line = get_next_line(fd)) != NULL)
-// 	{
-// 		width = 0;
-// 		while (line[width] && line[width] != '\n')
-// 			width++;
-// 		if (width > game->map.width)
-// 			game->map.width = width;
-// 		game->map.height++;
-// 		free(line);
-// 	}
-// 	close (fd);
-// 	return (game->map.width > 0 && game->map.height > 0);
-// }
-
-static int map_dimensions(t_game *game, char *map_path)
+static int	map_dimensions(t_game *game, char *map_path)
 {
-    int fd;
-    int width;
-    char *line;
+	int		fd;
+	int		width;
+	char	*line;
 
-    fd = open(map_path, O_RDONLY);
-    if (fd < 0)
-    {
-        write(2, "ERROR: Could not open map file.\n", 30);
-        exit(EXIT_FAILURE);
-    }
-    game->map.width = 0;
-    game->map.height = 0;
-    while ((line = get_next_line(fd)) != NULL)
-    {
-        width = 0;
-        while (line[width] && line[width] != '\n')
-            width++;
-        if (width > game->map.width)
-            game->map.width = width;
-        game->map.height++;
-        free(line);
-    }
-    close(fd);
-
-    // Debug print
-    printf("Map dimensions: %d (width) x %d (height)\n", game->map.width, game->map.height);
-
-    if (game->map.width <= 0 || game->map.height <= 0)
-    {
-        write(2, "ERROR: Invalid map dimensions.\n", 30);
-        return (0);
-    }
-    return (1);
+	fd = open(map_path, O_RDONLY);
+	if (fd < 0)
+	{
+		write(2, "ERROR OPENING MAP FILE\n", 23);
+		exit(EXIT_FAILURE);
+	}
+	game->map.width = 0;
+	game->map.height = 0;
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		width = 0;
+		while (line[width] && line[width] != '\n')
+			width++;
+		if (width > game->map.width)
+			game->map.width = width;
+		game->map.height++;
+		free(line);
+	}
+	close (fd);
+	if (game->map.width <= 0 || game->map.height <= 0)
+		return (0);
+	return (1);
 }
 
-// static int	map_alloc(t_game *game)
-// {
-// 	int	x;
-
-// 	game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
-// 	if (!game->map.grid)
-// 		return (0);
-// 	x = 0;
-// 	while (x < game->map.height)
-// 	{
-// 		game->map.grid[x] = malloc(sizeof(char) * (game->map.width + 1));
-// 		if (!game->map.grid[x])
-// 		{
-// 			while (--x >= 0)
-// 				free(game->map.grid[x]);
-// 			free(game->map.grid);
-// 			return (0);
-// 		}
-// 		x++;
-// 	}
-// 	game->map.grid[game->map.height] = NULL;
-// 	return (1);
-// }
-
-
-static int map_alloc(t_game *game)
+static int	map_alloc(t_game *game)
 {
-    int x;
+	int	x;
 
-    game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
-    if (!game->map.grid)
-    {
-        write(2, "ERROR: Memory allocation failed for map grid.\n", 45);
-        return (0);
-    }
-    x = 0;
-    while (x < game->map.height)
-    {
-        game->map.grid[x] = malloc(sizeof(char) * (game->map.width + 1));
-        if (!game->map.grid[x])
-        {
-            while (--x >= 0)
-                free(game->map.grid[x]);
-            free(game->map.grid);
-            write(2, "ERROR: Memory allocation failed for map row.\n", 45);
-            return (0);
-        }
-        x++;
-    }
-    game->map.grid[game->map.height] = NULL;
-
-    // Debug print
-    printf("Map memory allocated successfully.\n");
-
-    return (1);
+	game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
+	if (!game->map.grid)
+		return (0);
+	x = 0;
+	while (x < game->map.height)
+	{
+		game->map.grid[x] = malloc(sizeof(char) * (game->map.width + 1));
+		if (!game->map.grid[x])
+		{
+			while (--x >= 0)
+				free(game->map.grid[x]);
+			free(game->map.grid);
+			return (0);
+		}
+		x++;
+	}
+	game->map.grid[game->map.height] = NULL;
+	return (1);
 }
 
-
-// static int	read_map_content(t_game *game, char *map_path)
-// {
-// 	int		x;
-// 	int		y;
-// 	int		fd;
-// 	char	*line;
-
-// 	fd = open(map_path, O_RDONLY);
-// 	if (fd < 0)
-// 		return (0);
-// 	x = 0;
-// 	while ((line = get_next_line(fd)) != NULL && x++ < game->map.height)
-// 	{
-// 		y = 0;
-// 		while (line[y] && line[y] != '\n' && y < game->map.width)
-// 		{
-// 			game->map.grid[x][y] = line[y];
-// 			y++;
-// 		}
-// 		while (y++ < game->map.width)
-// 			game->map.grid[x][y] = ' ';
-// 		game->map.grid[x][y] = '\0';
-// 		free(line);
-// 	}
-// 	close (fd);
-// 	x = game->map.height;
-// 	return (x);
-// }
-
-
-static int read_map_content(t_game *game, char *map_path)
+static int	read_map_content(t_game *game, char *map_path)
 {
-    int x;
-    int y;
-    int fd;
-    char *line;
+	int		x;
+	int		y;
+	int		fd;
+	char	*line;
 
-    fd = open(map_path, O_RDONLY);
-    if (fd < 0)
-    {
-        write(2, "ERROR: Could not open map file.\n", 30);
-        return (0);
-    }
-    x = 0;
-    while ((line = get_next_line(fd)) != NULL && x < game->map.height)
-    {
-        y = 0;
-        while (line[y] && line[y] != '\n' && y < game->map.width)
-        {
-            game->map.grid[x][y] = line[y];
-            y++;
-        }
-        while (y < game->map.width)
-            game->map.grid[x][y++] = ' '; // Fill remaining spaces
-        game->map.grid[x][y] = '\0';
-        free(line);
-        x++;
-    }
-    close(fd);
-
-    // Debug print
-    printf("Map content read successfully.\n");
-
-    return (x == game->map.height);
+	fd = open(map_path, O_RDONLY);
+	if (fd < 0)
+		return (0);
+	x = 0;
+	while ((line = get_next_line(fd)) != NULL && x < game->map.height)
+	{
+		y = 0;
+		while (line[y] && line[y] != '\n' && y < game->map.width)
+		{
+			game->map.grid[x][y] = line[y];
+			y++;
+		}
+		while (y < game->map.width)
+			game->map.grid[x][y++] = ' ';
+		game->map.grid[x][y] = '\0';
+		free(line);
+		x++;
+	}
+	close (fd);
+	x = game->map.height;
+	return (x);
 }
-
-
 
 int parse_map(t_game *game, char *map_path)
 {

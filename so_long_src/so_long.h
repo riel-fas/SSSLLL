@@ -3,23 +3,29 @@
 /*                                                        :::      ::::::::   */
 /*   so_long.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:18:36 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 10:27:48 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 12:48:10 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SO_LONG_H
 # define SO_LONG_H
 
+
+# include "../MLX42/include/MLX42/MLX42.h"
+// # include "/home/riad/MLX42/include/MLX42/MLX42.h"
 # include <stdlib.h>
 # include <unistd.h>
 # include <fcntl.h>
 # include "../libft/libft.h"
 # include "../libft/get_next_line/get_next_line.h"
-
 # include <stdio.h>
+
+#define WINDOW_WIDTH 500
+#define WINDOW_HEIGHT 500
+
 
 typedef struct s_img
 {

@@ -6,68 +6,58 @@
 /*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:24:15 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 10:41:40 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 13:26:01 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
+void	into_game(t_game *game)
+{
+	game->mlx = mlx_init(WINDOW_WIDTH, WINDOW_HEIGHT, "so_long", true);
+	// if (!game->mlx)
+		// return (0);
+	mlx_loop(game->mlx);
+
+
+
+}
+
 // int main()
 // {
 // 	t_game game;
 
-
-
-
-
-
-
-
-
-
+// 	into_game(&game);
+// 	mlx_terminate(game.mlx);
+// 	return (EXIT_SUCCESS);
 
 
 
 // }
-// #include "your_header_file.h" // Replace with your actual header file name
 
-
-int main(int argc, char **argv)
+int main(int ac, char **av)
 {
+	// (void)ac;
     t_game game;
 
-    if (argc != 2)
+    if (ac != 2)
     {
-        printf("Usage: %s map_file.ber\n", argv[0]);
+        printf("Usage: %s map_file.ber\n", av[0]);
         return (1);
     }
 
-    // Initialize the game structure
-    game.map.grid = NULL;
-
     // Parse the map
-    if (!parse_map(&game, argv[1]))
+    if (!parse_map(&game, av[1]))
     {
         printf("Map parsing failed\n");
         return (1);
     }
 
-    // Print map information
-    printf("Map loaded successfully!\n");
-    printf("Map dimensions: %d x %d\n", game.map.width, game.map.height);
-    printf("Player position: (%d, %d)\n", game.map.player_x, game.map.player_y);
-    printf("Collectibles: %d\n", game.map.collectibles);
-    printf("Exit: %d\n", game.map.exit);
+    // Initialize the game
+    into_game(&game);
 
-    // Print the map
-    printf("\nMap content:\n");
-    for (int i = 0; i < game.map.height; i++)
-    {
-        printf("%s\n", game.map.grid[i]);
-    }
-
-    // Free allocated memory
-    free_game(&game);
+    // Start the game loop
+    mlx_loop(game.mlx);
 
     return (0);
 }
