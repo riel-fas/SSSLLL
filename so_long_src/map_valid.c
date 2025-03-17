@@ -3,69 +3,138 @@
 /*                                                        :::      ::::::::   */
 /*   map_valid.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:44:18 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 10:21:27 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 11:24:38 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
+// static int check_characters(t_game *game)
+// {
+// 	int i;
+// 	int j;
+
+// 	i = 0;
+// 	while (i < game->map.height)
+// 	{
+// 		j = 0;
+// 		while (j < game->map.width && game->map.grid[i][j])
+// 		{
+// 			if (game->map.grid[i][j] == 'P')
+// 			{
+// 				game->map.player++;
+// 				game->map.player_x = j;
+// 				game->map.player_y = i;
+// 			}
+// 			else if (game->map.grid[i][j] == 'E')
+// 				game->map.exit++;
+// 			else if (game->map.grid[i][j] == 'C')
+// 				game->map.collectibles++;
+// 			else if (game->map.grid[i][j] != '0' && game->map.grid[i][j] != '1')
+// 				return (0);
+// 			j++;
+// 		}
+// 		i++;
+// 	}
+// 	return (game->map.player == 1 && game->map.exit == 1 && game->map.collectibles >= 1);
+// }
+
+
 static int check_characters(t_game *game)
 {
-	int i;
-	int j;
+    int i;
+    int j;
 
-	i = 0;
-	while (i < game->map.height)
-	{
-		j = 0;
-		while (j < game->map.width && game->map.grid[i][j])
-		{
-			if (game->map.grid[i][j] == 'P')
-			{
-				game->map.player++;
-				game->map.player_x = j;
-				game->map.player_y = i;
-			}
-			else if (game->map.grid[i][j] == 'E')
-				game->map.exit++;
-			else if (game->map.grid[i][j] == 'C')
-				game->map.collectibles++;
-			else if (game->map.grid[i][j] != '0' && game->map.grid[i][j] != '1')
-				return (0);
-			j++;
-		}
-		i++;
-	}
-	return (game->map.player == 1 && game->map.exit == 1 && game->map.collectibles >= 1);
+    i = 0;
+    while (i < game->map.height)
+    {
+        j = 0;
+        while (j < game->map.width && game->map.grid[i][j])
+        {
+            if (game->map.grid[i][j] == 'P')
+            {
+                game->map.player++;
+                game->map.player_x = j;
+                game->map.player_y = i;
+            }
+            else if (game->map.grid[i][j] == 'E')
+                game->map.exit++;
+            else if (game->map.grid[i][j] == 'C')
+                game->map.collectibles++;
+            else if (game->map.grid[i][j] != '0' && game->map.grid[i][j] != '1')
+            {
+                write(2, "ERROR: Invalid character in map.\n", 33);
+                return (0);
+            }
+            j++;
+        }
+        i++;
+    }
+
+    // Debug print
+    printf("Map characters validated successfully.\n");
+
+    return (game->map.player == 1 && game->map.exit == 1 && game->map.collectibles >= 1);
 }
+
+
+// static int check_walls(t_game *game)
+// {
+// 	int i;
+// 	int j;
+
+// 	i = 0;
+// 	while (i < game->map.height)
+// 	{
+// 		j = 0;
+// 		while (j < game->map.width && game->map.grid[i][j])
+// 		{
+// 			if ((i == 0 || i == game->map.height - 1 ||
+// 				j == 0 || j == game->map.width - 1) &&
+// 				game->map.grid[i][j] != '1')
+// 				return (0);
+// 			j++;
+// 		}
+//         // Check if the line has the correct length
+// 		if (j != game->map.width)
+// 			return (0);
+// 		i++;
+// 	}
+// 	return (1);
+// }
+
 
 static int check_walls(t_game *game)
 {
-	int i;
-	int j;
+    int i;
+    int j;
 
-	i = 0;
-	while (i < game->map.height)
-	{
-		j = 0;
-		while (j < game->map.width && game->map.grid[i][j])
-		{
-			if ((i == 0 || i == game->map.height - 1 ||
-				j == 0 || j == game->map.width - 1) &&
-				game->map.grid[i][j] != '1')
-				return (0);
-			j++;
-		}
-        // Check if the line has the correct length
-		if (j != game->map.width)
-			return (0);
-		i++;
-	}
-	return (1);
+    i = 0;
+    while (i < game->map.height)
+    {
+        j = 0;
+        while (j < game->map.width && game->map.grid[i][j])
+        {
+            if ((i == 0 || i == game->map.height - 1 || j == 0 || j == game->map.width - 1) &&
+                game->map.grid[i][j] != '1')
+            {
+                write(2, "ERROR: Map is not surrounded by walls.\n", 38);
+                return (0);
+            }
+            j++;
+        }
+        i++;
+    }
+
+    // Debug print
+    printf("Map walls validated successfully.\n");
+
+    return (1);
 }
+
 
 static void flood_fill(char **map, int x, int y, int *count)
 {
@@ -81,46 +150,97 @@ static void flood_fill(char **map, int x, int y, int *count)
 	flood_fill(map, x, y - 1, count);
 }
 
+// static int check_path(t_game *game)
+// {
+// 	char    **temp_map;
+// 	int     i;
+// 	int		j;
+// 	int     count;
+// 	int     expected;
+
+// 	temp_map = malloc(sizeof(char *) * (game->map.height + 1));
+// 	if (!temp_map)
+// 		return (0);
+// 	i = 0;
+// 	while (i < game->map.height)
+// 	{
+// 		temp_map[i] = malloc(sizeof(char) * (game->map.width + 1));
+// 		if (!temp_map[i])
+// 		{
+// 			while (--i >= 0)
+// 				free(temp_map[i]);
+// 			free(temp_map);
+// 			return (0);
+// 		}
+// 		j = 0;
+// 		while (j < game->map.width + 1)
+// 		{
+// 			temp_map[i][j] = game->map.grid[i][j];
+// 			j++;
+// 		}
+// 		i++;
+// 	}
+// 	temp_map[game->map.height] = NULL;
+// 	count = 0;
+// 	expected = game->map.collectibles + game->map.exit; // Count collectibles and exit
+// 	flood_fill(temp_map, game->map.player_x, game->map.player_y, &count);
+// 	i = 0;
+// 	while (i < game->map.height)
+// 		free(temp_map[i++]);
+// 	free(temp_map);
+// 	return (count == expected);
+// }
+
+
 static int check_path(t_game *game)
 {
-	char    **temp_map;
-	int     i;
-	int		j;
-	int     count;
-	int     expected;
+    char **temp_map;
+    int i;
+    int j;
+    int count;
+    int expected;
 
-	temp_map = malloc(sizeof(char *) * (game->map.height + 1));
-	if (!temp_map)
-		return (0);
-	i = 0;
-	while (i < game->map.height)
-	{
-		temp_map[i] = malloc(sizeof(char) * (game->map.width + 1));
-		if (!temp_map[i])
-		{
-			while (--i >= 0)
-				free(temp_map[i]);
-			free(temp_map);
-			return (0);
-		}
-		j = 0;
-		while (j < game->map.width + 1)
-		{
-			temp_map[i][j] = game->map.grid[i][j];
-			j++;
-		}
-		i++;
-	}
-	temp_map[game->map.height] = NULL;
-	count = 0;
-	expected = game->map.collectibles + game->map.exit; // Count collectibles and exit
-	flood_fill(temp_map, game->map.player_x, game->map.player_y, &count);
-	i = 0;
-	while (i < game->map.height)
-		free(temp_map[i++]);
-	free(temp_map);
-	return (count == expected);
+    temp_map = malloc(sizeof(char *) * (game->map.height + 1));
+    if (!temp_map)
+    {
+        write(2, "ERROR: Memory allocation failed for temp map.\n", 45);
+        return (0);
+    }
+    i = 0;
+    while (i < game->map.height)
+    {
+        temp_map[i] = malloc(sizeof(char) * (game->map.width + 1));
+        if (!temp_map[i])
+        {
+            while (--i >= 0)
+                free(temp_map[i]);
+            free(temp_map);
+            write(2, "ERROR: Memory allocation failed for temp map row.\n", 49);
+            return (0);
+        }
+        j = 0;
+        while (j < game->map.width + 1)
+        {
+            temp_map[i][j] = game->map.grid[i][j];
+            j++;
+        }
+        i++;
+    }
+    temp_map[game->map.height] = NULL;
+    count = 0;
+    expected = game->map.collectibles + game->map.exit;
+    flood_fill(temp_map, game->map.player_x, game->map.player_y, &count);
+    i = 0;
+    while (i < game->map.height)
+        free(temp_map[i++]);
+    free(temp_map);
+
+    // Debug print
+    printf("Map path validated successfully.\n");
+
+    return (count == expected);
 }
+
 
 int validate_map(t_game *game)
 {
