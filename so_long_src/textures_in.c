@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   textures_in.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:33:11 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 15:07:01 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 17:57:15 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,9 @@ void load_assets(t_game *game)
         exit_with_error("ERROR: Failed to load collectible sprite.");
     game->collectible_img = mlx_texture_to_image(game->mlx, texture);
     mlx_delete_texture(texture);
+	// game->collectible_img->enabled = false;
+
+
 
     // Load exit sprite
     texture = mlx_load_png("textures/1/wall4.png");

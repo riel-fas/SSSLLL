@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   key_press.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:38:04 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 15:01:09 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/17 18:06:19 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,7 @@ void render_map(t_game *game)
     int y;
 
     // Clear the screen (optional, depending on your MLX42 setup)
+    // mlx_close_window(game->mlx, game->win);
 
     // Loop through the map grid
     y = 0;
@@ -123,4 +124,27 @@ void render_map(t_game *game)
 
     // Debug print
     printf("Map rendered successfully.\n");
+}
+
+void game_loop(void *param)
+{
+    t_game *game = (t_game *)param;
+
+    // Handle key inputs
+    if (mlx_is_key_down(game->mlx, MLX_KEY_W)) // Move up
+        move_player(game, 0, -1);
+    if (mlx_is_key_down(game->mlx, MLX_KEY_S)) // Move down
+        move_player(game, 0, 1);
+    if (mlx_is_key_down(game->mlx, MLX_KEY_A)) // Move left
+        move_player(game, -1, 0);
+    if (mlx_is_key_down(game->mlx, MLX_KEY_D)) // Move right
+        move_player(game, 1, 0);
+    if (mlx_is_key_down(game->mlx, MLX_KEY_ESCAPE)) // Exit game
+        mlx_close_window(game->mlx);
+
+    // Render the map
+    render_map(game);
+
+    // Limit frame rate to ~60 FPS
+    usleep(1000000 / 60);
 }
