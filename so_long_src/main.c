@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:24:15 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 18:01:27 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/18 09:11:17 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,24 +25,19 @@
 
 void init_game(t_game *game)
 {
-    // Initialize MLX and open a window
     game->mlx = mlx_init(game->map.width * TILE_SIZE, game->map.height * TILE_SIZE, "so_long", false);
     if (!game->mlx)
         exit_with_error("ERROR: Failed to initialize MLX.");
 
-    // Load assets
     load_assets(game);
-
-    // Initialize game variables
     game->moves = 0;
 
-    // Set up loop hook
+    // Initialize the map rendering (create all image instances)
+    render_map(game);
+
+    // Set up the game loop
     mlx_loop_hook(game->mlx, game_loop, game);
 
-    // Set up close hook
-    // mlx_close_hook(game->mlx, handle_window_close, game);
-
-    // Debug print
     printf("Game initialized successfully.\n");
 }
 

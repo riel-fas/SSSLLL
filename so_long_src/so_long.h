@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   so_long.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riel-fas <riel-fas@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:18:36 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/17 17:54:15 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/18 10:51:44 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,26 @@ typedef struct s_map
 	int		player_y;
 }		t_map;
 
+// typedef struct s_game
+// {
+//     // Existing variables...
+
+//     // Player animation
+//     mlx_image_t **player_down_frames; // Array of frames for down animation
+//     mlx_image_t **player_up_frames;   // Array of frames for up animation
+//     mlx_image_t **player_left_frames; // Array of frames for left animation
+//     mlx_image_t **player_right_frames; // Array of frames for right animation
+//     int player_current_frame;         // Current frame index
+//     int player_animation_timer;       // Timer for frame updates
+
+//     // Collectible animation
+//     mlx_image_t **collectible_frames; // Array of frames for collectible animation
+//     int collectible_current_frame;    // Current frame index
+//     int collectible_animation_timer;  // Timer for frame updates
+
+//     // Other variables...
+// } t_game;
+
 typedef struct s_game
 {
     mlx_t       *mlx;           // MLX42 window
@@ -59,9 +79,55 @@ typedef struct s_game
     mlx_image_t *collectible_img; // Collectible sprite
     mlx_image_t *exit_img;      // Exit sprite
     mlx_image_t *floor_img;     // Floor sprite
+
+    // Animation sprites for player
+    mlx_image_t *player_up;
+    mlx_image_t *player_down;
+    mlx_image_t *player_left;
+    mlx_image_t *player_right;
+    int         player_direction; // 0=down, 1=up, 2=left, 3=right
+
+    // Image tracking
+    int wall_count;
+    int collectible_count;
+    int exit_count;
+
+
+
+
     t_map       map;            // Map data
     int         moves;          // Move counter
+
+    // Player animation
+    mlx_image_t **player_down_frames; // Array of frames for down animation
+    mlx_image_t **player_up_frames;   // Array of frames for up animation
+    mlx_image_t **player_left_frames; // Array of frames for left animation
+    mlx_image_t **player_right_frames; // Array of frames for right animation
+    int player_current_frame;         // Current frame index
+    int player_animation_timer;      // Timer for frame updates
+
+
+ 
+    // Collectible animation
+    mlx_image_t **collectible_frames; // Array of frames for collectible animation
+    int collectible_current_frame;    // Current frame index
+    int collectible_animation_timer;  // Timer for frame updates
+
+
+
+
+
+
+
+
+
 } t_game;
+
+// Add direction constants
+#define DIR_DOWN 0
+#define DIR_UP 1
+#define DIR_LEFT 2
+#define DIR_RIGHT 3
 
 
 
@@ -78,11 +144,14 @@ void init_game(t_game *game);
 void	free_game(t_game *game);
 void	exit_with_error(char *message);
 int		handle_window_close(t_game *game);
+void update_render_map(t_game *game);
 
 
 void load_assets(t_game *game);
 void game_loop(void *param);
 
+void update_player_sprite(t_game *game);
+void update_collectible_sprites(t_game *game);
 
 
 

@@ -1,0 +1,1668 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    program.txt                                        :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 08:49:02 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:50:38 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include "so_long.h"
+
+// void	errors()
+
+void free_game(t_game *game)
+{
+    int i;
+
+    // Free player animation frames
+    if (game->player_down_frames) {
+        for (i = 0; i < 4; i++) {
+            if (game->player_down_frames[i])
+                mlx_delete_image(game->mlx, game->player_down_frames[i]);
+        }
+        free(game->player_down_frames);
+    }
+    if (game->player_up_frames) {
+        for (i = 0; i < 4; i++) {
+            if (game->player_up_frames[i])
+                mlx_delete_image(game->mlx, game->player_up_frames[i]);
+        }
+        free(game->player_up_frames);
+    }
+    if (game->player_left_frames) {
+        for (i = 0; i < 4; i++) {
+            if (game->player_left_frames[i])
+                mlx_delete_image(game->mlx, game->player_left_frames[i]);
+        }
+        free(game->player_left_frames);
+    }
+    if (game->player_right_frames) {
+        for (i = 0; i < 4; i++) {
+            if (game->player_right_frames[i])
+                mlx_delete_image(game->mlx, game->player_right_frames[i]);
+        }
+        free(game->player_right_frames);
+    }
+
+    // Free collectible animation frames
+    if (game->collectible_frames) {
+        for (i = 0; i < 4; i++) {
+            if (game->collectible_frames[i])
+                mlx_delete_image(game->mlx, game->collectible_frames[i]);
+        }
+        free(game->collectible_frames);
+    }
+
+    // Free map grid
+    if (game->map.grid) {
+        i = 0;
+        while (i < game->map.height) {
+            if (game->map.grid[i])
+                free(game->map.grid[i]);
+            i++;
+        }
+        free(game->map.grid);
+    }
+
+    // Free other MLX images (walls, floor, exit, etc.)
+    if (game->wall_img) mlx_delete_image(game->mlx, game->wall_img);
+    if (game->floor_img) mlx_delete_image(game->mlx, game->floor_img);
+    if (game->exit_img) mlx_delete_image(game->mlx, game->exit_img);
+
+    // Free MLX instance
+    if (game->mlx) mlx_terminate(game->mlx);
+}
+
+// void free_game(t_game *game)
+// {
+//     int i;
+
+//     if (game->map.grid)
+//     {
+//         i = 0;
+//         while (i < game->map.height)
+//         {
+//             if (game->map.grid[i])
+//                 free(game->map.grid[i]);
+//             i++;
+//         }
+//         free(game->map.grid);
+//     }
+// }
+
+void exit_with_error(char *message)
+{
+    write(2, message, ft_strlen(message));
+    write(2, "\n", 1);
+    exit(EXIT_FAILURE);
+}
+
+int handle_window_close(t_game *game)
+{
+    free_game(game); // Free allocated memory
+    exit(0);
+    return (0);
+}
+
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    key_presses.txt                                    :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 14:38:04 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:47:07 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include "so_long.h"
+
+void move_player(t_game *game, int dx, int dy)
+{
+    int new_x = game->map.player_x + dx;
+    int new_y = game->map.player_y + dy;
+
+    // Update player direction based on movement
+    if (dx == 1 && dy == 0)
+        game->player_direction = DIR_RIGHT;
+    else if (dx == -1 && dy == 0)
+        game->player_direction = DIR_LEFT;
+    else if (dx == 0 && dy == -1)
+        game->player_direction = DIR_UP;
+    else if (dx == 0 && dy == 1)
+        game->player_direction = DIR_DOWN;
+
+    // Check if the new position is within the map boundaries
+    if (new_x < 0 || new_x >= game->map.width || new_y < 0 || new_y >= game->map.height)
+        return; // Out of bounds
+
+    // Check if the new position is a wall
+    if (game->map.grid[new_y][new_x] == '1')
+        return; // Wall collision
+
+    // Handle collectibles
+    if (game->map.grid[new_y][new_x] == 'C')
+    {
+        game->map.collected++; // Increment collected count
+        game->map.grid[new_y][new_x] = '0'; // Remove collectible from the map
+    }
+
+    // Handle exit
+    if (game->map.grid[new_y][new_x] == 'E')
+    {
+        if (game->map.collected == game->map.collectibles)
+        {
+            printf("You win! Moves: %d\n", game->moves + 1);
+            mlx_close_window(game->mlx); // Close the game window
+            return;
+        }
+        else
+        {
+            printf("Collect all collectibles before exiting!\n");
+            return;
+        }
+    }
+
+    // Update player position
+    game->map.grid[game->map.player_y][game->map.player_x] = '0'; // Clear old position
+    game->map.player_x = new_x;
+    game->map.player_y = new_y;
+    game->map.grid[new_y][new_x] = 'P'; // Set new position
+
+    // Increment move counter
+    game->moves++;
+
+    // Update the rendering (much more efficient than redrawing everything)
+    update_render_map(game);
+
+    // Debug print
+    printf("Player moved to (%d, %d). Moves: %d\n", new_x, new_y, game->moves);
+}
+
+void handle_keypress(mlx_key_data_t keydata, void *param)
+{
+    t_game *game = (t_game *)param;
+
+    // Check if the key is pressed (not released or repeated)
+    if (keydata.action == MLX_PRESS || keydata.action == MLX_REPEAT)
+    {
+        // Move player based on key pressed
+        if (keydata.key == MLX_KEY_W || keydata.key == MLX_KEY_UP)
+            move_player(game, 0, -1); // Move up
+        else if (keydata.key == MLX_KEY_S || keydata.key == MLX_KEY_DOWN)
+            move_player(game, 0, 1);  // Move down
+        else if (keydata.key == MLX_KEY_A || keydata.key == MLX_KEY_LEFT)
+            move_player(game, -1, 0); // Move left
+        else if (keydata.key == MLX_KEY_D || keydata.key == MLX_KEY_RIGHT)
+            move_player(game, 1, 0);  // Move right
+        else if (keydata.key == MLX_KEY_ESCAPE)
+            mlx_close_window(game->mlx); // Close the window
+    }
+}
+
+// void render_map(t_game *game)
+// {
+//     int x;
+//     int y;
+
+//     // Clear the screen (optional, depending on your MLX42 setup)
+//     // mlx_close_window(game->mlx, game->win);
+
+//     // Loop through the map grid
+//     y = 0;
+//     while (y < game->map.height)
+//     {
+//         x = 0;
+//         while (x < game->map.width)
+//         {
+//             // Calculate pixel coordinates
+//             int pixel_x = x * TILE_SIZE;
+//             int pixel_y = y * TILE_SIZE;
+
+//             // Draw floor first (background)
+//             mlx_image_to_window(game->mlx, game->floor_img, pixel_x, pixel_y);
+
+//             // Draw other tiles based on the map grid
+//             if (game->map.grid[y][x] == '1')
+//                 mlx_image_to_window(game->mlx, game->wall_img, pixel_x, pixel_y);
+//             else if (game->map.grid[y][x] == 'P')
+//                 mlx_image_to_window(game->mlx, game->player_img, pixel_x, pixel_y);
+//             else if (game->map.grid[y][x] == 'C')
+//                 mlx_image_to_window(game->mlx, game->collectible_img, pixel_x, pixel_y);
+//             else if (game->map.grid[y][x] == 'E')
+//                 mlx_image_to_window(game->mlx, game->exit_img, pixel_x, pixel_y);
+
+//             x++;
+//         }
+//         y++;
+//     }
+
+//     // Debug print
+//     printf("Map rendered successfully.\n");
+// }
+
+
+void render_map(t_game *game)
+{
+    int x, y;
+
+    // First, add all floor tiles to window
+    for (y = 0; y < game->map.height; y++) {
+        for (x = 0; x < game->map.width; x++) {
+            mlx_image_to_window(game->mlx, game->floor_img, x * TILE_SIZE, y * TILE_SIZE);
+        }
+    }
+    printf("Floor tiles rendered successfully.\n");
+
+    // Then add wall, collectible, exit, and player tiles
+    for (y = 0; y < game->map.height; y++) {
+        for (x = 0; x < game->map.width; x++) {
+            if (game->map.grid[y][x] == '1') {
+                mlx_image_to_window(game->mlx, game->wall_img, x * TILE_SIZE, y * TILE_SIZE);
+                game->wall_count++;
+            } else if (game->map.grid[y][x] == 'C') {
+                mlx_image_to_window(game->mlx, game->collectible_img, x * TILE_SIZE, y * TILE_SIZE);
+                game->collectible_count++;
+            } else if (game->map.grid[y][x] == 'E') {
+                mlx_image_to_window(game->mlx, game->exit_img, x * TILE_SIZE, y * TILE_SIZE);
+                game->exit_count++;
+            }
+        }
+    }
+    printf("Walls, collectibles, and exit rendered successfully.\n");
+
+    // Add all directional player sprites but make only one visible
+    mlx_image_to_window(game->mlx, game->player_down, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+    mlx_image_to_window(game->mlx, game->player_up, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+    mlx_image_to_window(game->mlx, game->player_left, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+    mlx_image_to_window(game->mlx, game->player_right, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+
+    // Only make the current direction visible
+    game->player_down->instances[0].enabled = (game->player_direction == DIR_DOWN);
+    game->player_up->instances[0].enabled = (game->player_direction == DIR_UP);
+    game->player_left->instances[0].enabled = (game->player_direction == DIR_LEFT);
+    game->player_right->instances[0].enabled = (game->player_direction == DIR_RIGHT);
+
+    printf("Player sprites rendered successfully.\n");
+
+    printf("Map initialized with %d walls, %d collectibles, %d exits\n",
+           game->wall_count, game->collectible_count, game->exit_count);
+
+
+
+	printf("Rendering player at (%d, %d)\n", game->map.player_x, game->map.player_y); // Debug print
+	mlx_image_to_window(game->mlx, game->player_down, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+	mlx_image_to_window(game->mlx, game->player_up, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+	mlx_image_to_window(game->mlx, game->player_left, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+	mlx_image_to_window(game->mlx, game->player_right, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+
+// Only make the current direction visible
+	game->player_down->instances[0].enabled = (game->player_direction == DIR_DOWN);
+	game->player_up->instances[0].enabled = (game->player_direction == DIR_UP);
+	game->player_left->instances[0].enabled = (game->player_direction == DIR_LEFT);
+	game->player_right->instances[0].enabled = (game->player_direction == DIR_RIGHT);
+
+	printf("Player sprites rendered successfully.\n");
+}
+
+// void render_map(t_game *game)
+// {
+//     int x, y;
+
+//     // First, add all floor tiles to window
+//     for (y = 0; y < game->map.height; y++) {
+//         for (x = 0; x < game->map.width; x++) {
+//             mlx_image_to_window(game->mlx, game->floor_img, x * TILE_SIZE, y * TILE_SIZE);
+//         }
+//     }
+
+//     // Then add wall, collectible, exit and player tiles
+//     for (y = 0; y < game->map.height; y++) {
+//         for (x = 0; x < game->map.width; x++) {
+//             if (game->map.grid[y][x] == '1') {
+//                 mlx_image_to_window(game->mlx, game->wall_img, x * TILE_SIZE, y * TILE_SIZE);
+//                 game->wall_count++;
+//             } else if (game->map.grid[y][x] == 'C') {
+//                 mlx_image_to_window(game->mlx, game->collectible_img, x * TILE_SIZE, y * TILE_SIZE);
+//                 game->collectible_count++;
+//             } else if (game->map.grid[y][x] == 'E') {
+//                 mlx_image_to_window(game->mlx, game->exit_img, x * TILE_SIZE, y * TILE_SIZE);
+//                 game->exit_count++;
+//             }
+//         }
+//     }
+
+//     // Add all directional player sprites but make only one visible
+//     mlx_image_to_window(game->mlx, game->player_down, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+//     mlx_image_to_window(game->mlx, game->player_up, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+//     mlx_image_to_window(game->mlx, game->player_left, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+//     mlx_image_to_window(game->mlx, game->player_right, game->map.player_x * TILE_SIZE, game->map.player_y * TILE_SIZE);
+
+//     // Only make the current direction visible
+//     game->player_down->instances[0].enabled = (game->player_direction == DIR_DOWN);
+//     game->player_up->instances[0].enabled = (game->player_direction == DIR_UP);
+//     game->player_left->instances[0].enabled = (game->player_direction == DIR_LEFT);
+//     game->player_right->instances[0].enabled = (game->player_direction == DIR_RIGHT);
+
+//     printf("Map initialized with %d walls, %d collectibles, %d exits\n",
+//            game->wall_count, game->collectible_count, game->exit_count);
+// }
+
+void update_render_map(t_game *game)
+{
+    int i = 0;
+    int x, y;
+
+    // Update player sprites based on direction
+    update_player_sprite(game);
+
+    // Update collectibles - hide collected ones
+    i = 0;
+    for (y = 0; y < game->map.height; y++) {
+        for (x = 0; x < game->map.width; x++) {
+            if (game->map.grid[y][x] == 'C' && i < game->collectible_count) {
+                game->collectible_img->instances[i].enabled = true;
+                i++;
+            }
+        }
+    }
+
+    // Disable collected collectibles
+    while (i < game->collectible_count) {
+        game->collectible_img->instances[i].enabled = false;
+        i++;
+    }
+}
+
+
+// void game_loop(void *param)
+// {
+//     t_game *game = (t_game *)param;
+//     static int last_move_time = 0;
+//     int current_time;
+
+//     // Get current time
+//     current_time = mlx_get_time() * 1000; // Convert to milliseconds
+
+//     // Process input only if enough time has passed (100ms)
+//     if (current_time - last_move_time < 100)
+//         return;
+
+//     // Handle key inputs (one at a time with priority)
+//     if (mlx_is_key_down(game->mlx, MLX_KEY_ESCAPE)) {
+//         mlx_close_window(game->mlx);
+//     }
+//     else if (mlx_is_key_down(game->mlx, MLX_KEY_W) || mlx_is_key_down(game->mlx, MLX_KEY_UP)) {
+//         move_player(game, 0, -1); // Move up
+//         last_move_time = current_time;
+//     }
+//     else if (mlx_is_key_down(game->mlx, MLX_KEY_S) || mlx_is_key_down(game->mlx, MLX_KEY_DOWN))
+// 	{
+//         move_player(game, 0, 1); // Move down
+//         last_move_time = current_time;
+//     }
+//     else if (mlx_is_key_down(game->mlx, MLX_KEY_A) || mlx_is_key_down(game->mlx, MLX_KEY_LEFT)) {
+//         move_player(game, -1, 0); // Move left
+//         last_move_time = current_time;
+//     }
+//     else if (mlx_is_key_down(game->mlx, MLX_KEY_D) || mlx_is_key_down(game->mlx, MLX_KEY_RIGHT)) {
+//         move_player(game, 1, 0); // Move right
+//         last_move_time = current_time;
+//     }
+
+//     // No need to call render_map here - we update visuals on movement
+// }
+
+
+void game_loop(void *param)
+{
+    t_game *game = (t_game *)param;
+    static int last_move_time = 0;
+    int current_time;
+
+    // Get current time
+    current_time = mlx_get_time() * 1000; // Convert to milliseconds
+
+    // Update player animation
+    game->player_animation_timer += current_time - last_move_time;
+    if (game->player_animation_timer > 100) { // Change frame every 100ms
+        game->player_current_frame = (game->player_current_frame + 1) % 4; // Cycle through 4 frames
+        game->player_animation_timer = 0;
+        update_player_sprite(game); // Update the player sprite
+    }
+
+    // Update collectible animation
+    game->collectible_animation_timer += current_time - last_move_time;
+    if (game->collectible_animation_timer > 100) { // Change frame every 100ms
+        game->collectible_current_frame = (game->collectible_current_frame + 1) % 4; // Cycle through 4 frames
+        game->collectible_animation_timer = 0;
+        update_collectible_sprites(game); // Update the collectible sprites
+    }
+
+    // Handle key inputs (one at a time with priority)
+    if (mlx_is_key_down(game->mlx, MLX_KEY_ESCAPE)) {
+        mlx_close_window(game->mlx);
+    }
+    else if (mlx_is_key_down(game->mlx, MLX_KEY_W) || mlx_is_key_down(game->mlx, MLX_KEY_UP)) {
+        move_player(game, 0, -1); // Move up
+        last_move_time = current_time;
+    }
+    else if (mlx_is_key_down(game->mlx, MLX_KEY_S) || mlx_is_key_down(game->mlx, MLX_KEY_DOWN)) {
+        move_player(game, 0, 1); // Move down
+        last_move_time = current_time;
+    }
+    else if (mlx_is_key_down(game->mlx, MLX_KEY_A) || mlx_is_key_down(game->mlx, MLX_KEY_LEFT)) {
+        move_player(game, -1, 0); // Move left
+        last_move_time = current_time;
+    }
+    else if (mlx_is_key_down(game->mlx, MLX_KEY_D) || mlx_is_key_down(game->mlx, MLX_KEY_RIGHT)) {
+        move_player(game, 1, 0); // Move right
+        last_move_time = current_time;
+    }
+
+    // No need to call render_map here - we update visuals on movement
+}
+
+
+
+
+
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    main.txt                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 08:24:15 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:49:53 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include "so_long.h"
+
+// void	into_game(t_game *game)
+// {
+// 	game->mlx = mlx_init(WINDOW_WIDTH, WINDOW_HEIGHT, "so_long", true);
+// 	// if (!game->mlx)
+// 		// return (0);
+// 	mlx_loop(game->mlx);
+
+
+
+// }
+
+void init_game(t_game *game)
+{
+    game->mlx = mlx_init(game->map.width * TILE_SIZE, game->map.height * TILE_SIZE, "so_long", false);
+    if (!game->mlx)
+        exit_with_error("ERROR: Failed to initialize MLX.");
+
+    load_assets(game);
+    game->moves = 0;
+
+    // Initialize the map rendering (create all image instances)
+    render_map(game);
+
+    // Set up the game loop
+    mlx_loop_hook(game->mlx, game_loop, game);
+
+    printf("Game initialized successfully.\n");
+}
+
+int main(int argc, char **argv)
+{
+    t_game game;
+
+    if (argc != 2)
+    {
+        printf("Usage: %s map_file.ber\n", argv[0]);
+        return (1);
+    }
+
+    // Parse the map
+    if (!parse_map(&game, argv[1]))
+    {
+        printf("Map parsing failed\n");
+        return (1);
+    }
+
+    // Initialize the game
+    init_game(&game);
+
+    // Start the game loop
+    mlx_loop(game.mlx);
+
+    return (0);
+}
+
+
+
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    map_pars.txt                                       :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 08:37:55 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:47:37 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include "so_long.h"
+
+static int	map_dimensions(t_game *game, char *map_path)
+{
+	int		fd;
+	int		width;
+	char	*line;
+
+	fd = open(map_path, O_RDONLY);
+	if (fd < 0)
+	{
+		write(2, "ERROR OPENING MAP FILE\n", 23);
+		exit(EXIT_FAILURE);
+	}
+	game->map.width = 0;
+	game->map.height = 0;
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		width = 0;
+		while (line[width] && line[width] != '\n')
+			width++;
+		if (width > game->map.width)
+			game->map.width = width;
+		game->map.height++;
+		free(line);
+	}
+	close (fd);
+	if (game->map.width <= 0 || game->map.height <= 0)
+		return (0);
+	return (1);
+}
+
+static int	map_alloc(t_game *game)
+{
+	int	x;
+
+	game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
+	if (!game->map.grid)
+		return (0);
+	x = 0;
+	while (x < game->map.height)
+	{
+		game->map.grid[x] = malloc(sizeof(char) * (game->map.width + 1));
+		if (!game->map.grid[x])
+		{
+			while (--x >= 0)
+				free(game->map.grid[x]);
+			free(game->map.grid);
+			return (0);
+		}
+		x++;
+	}
+	game->map.grid[game->map.height] = NULL;
+	return (1);
+}
+
+static int	read_map_content(t_game *game, char *map_path)
+{
+	int		x;
+	int		y;
+	int		fd;
+	char	*line;
+
+	fd = open(map_path, O_RDONLY);
+	if (fd < 0)
+		return (0);
+	x = 0;
+	while ((line = get_next_line(fd)) != NULL && x < game->map.height)
+	{
+		y = 0;
+		while (line[y] && line[y] != '\n' && y < game->map.width)
+		{
+			game->map.grid[x][y] = line[y];
+			y++;
+		}
+		while (y < game->map.width)
+			game->map.grid[x][y++] = ' ';
+		game->map.grid[x][y] = '\0';
+		free(line);
+		x++;
+	}
+	close (fd);
+	x = game->map.height;
+	return (x);
+}
+
+// int parse_map(t_game *game, char *map_path)
+// {
+// 	game->map.collectibles = 0;
+// 	game->map.collected = 0;
+// 	game->map.exit = 0;
+// 	game->map.player = 0;
+// 	if (!map_dimensions(game, map_path))
+// 	{
+// 		write(2, "Error\nFailed to read map file\n", 30);
+// 		return (0);
+// 	}
+// 	if (!map_alloc(game))
+// 	{
+// 		write(2, "Error\nMemory allocation failed\n", 31);
+// 		return (0);
+// 	}
+// 	if (!read_map_content(game, map_path))
+// 	{
+// 		write(2, "Error\nFailed to read map content\n", 33);
+// 		free_game(game); // You'll need to implement this function
+// 		return (0);
+// 	}
+// 	if (!validate_map(game))
+// 	{
+// 		free_game(game);
+// 		return (0);
+// 	}
+// 	return (1);
+// }
+
+
+int parse_map(t_game *game, char *map_path)
+{
+    game->map.collectibles = 0;
+    game->map.collected = 0;
+    game->map.exit = 0;
+    game->map.player = 0;
+    if (!map_dimensions(game, map_path))
+    {
+        write(2, "Error\nFailed to read map file\n", 30);
+        return (0);
+    }
+    if (!map_alloc(game))
+    {
+        write(2, "Error\nMemory allocation failed\n", 31);
+        return (0);
+    }
+    if (!read_map_content(game, map_path))
+    {
+        write(2, "Error\nFailed to read map content\n", 33);
+        free_game(game); // You'll need to implement this function
+        return (0);
+    }
+    if (!validate_map(game))
+    {
+        free_game(game);
+        return (0);
+    }
+
+    printf("Player position: (%d, %d)\n", game->map.player_x, game->map.player_y);
+    return (1);
+}
+
+
+
+
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    map_valid.txt                                      :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 08:44:18 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:47:48 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include "so_long.h"
+
+static int check_characters(t_game *game)
+{
+	int i;
+	int j;
+
+	i = 0;
+	while (i < game->map.height)
+	{
+		j = 0;
+		while (j < game->map.width && game->map.grid[i][j])
+		{
+			if (game->map.grid[i][j] == 'P')
+			{
+				game->map.player++;
+				game->map.player_x = j;
+				game->map.player_y = i;
+			}
+			else if (game->map.grid[i][j] == 'E')
+				game->map.exit++;
+			else if (game->map.grid[i][j] == 'C')
+				game->map.collectibles++;
+			else if (game->map.grid[i][j] != '0' && game->map.grid[i][j] != '1')
+				return (0);
+			j++;
+		}
+		i++;
+	}
+	return (game->map.player == 1 && game->map.exit == 1 && game->map.collectibles >= 1);
+}
+
+
+static int check_walls(t_game *game)
+{
+	int i;
+	int j;
+
+	i = 0;
+	while (i < game->map.height)
+	{
+		j = 0;
+		while (j < game->map.width && game->map.grid[i][j])
+		{
+			if ((i == 0 || i == game->map.height - 1 || j == 0 || j == game->map.width - 1) && game->map.grid[i][j] != '1')
+				return (0);
+			j++;
+		}
+		i++;
+	}
+	return (1);
+}
+
+static void flood_fill(char **map, int x, int y, int *count)
+{
+	if (x < 0 || y < 0 || map[y] == NULL || map[y][x] == '\0' || map[y][x] == '1' || map[y][x] == 'F')
+		return;
+
+	if (map[y][x] == 'C' || map[y][x] == 'E')
+		(*count)++;
+	map[y][x] = 'F'; // Mark as visited
+	flood_fill(map, x + 1, y, count);
+	flood_fill(map, x - 1, y, count);
+	flood_fill(map, x, y + 1, count);
+	flood_fill(map, x, y - 1, count);
+}
+
+static int check_path(t_game *game)
+{
+	char    **temp_map;
+	int     i;
+	int		j;
+	int     count;
+	int     expected;
+
+	temp_map = malloc(sizeof(char *) * (game->map.height + 1));
+	if (!temp_map)
+		return (0);
+	i = 0;
+	while (i < game->map.height)
+	{
+		temp_map[i] = malloc(sizeof(char) * (game->map.width + 1));
+		if (!temp_map[i])
+		{
+			while (--i >= 0)
+				free(temp_map[i]);
+			free(temp_map);
+			return (0);
+		}
+		j = 0;
+		while (j < game->map.width + 1)
+		{
+			temp_map[i][j] = game->map.grid[i][j];
+			j++;
+		}
+		i++;
+	}
+	temp_map[game->map.height] = NULL;
+	count = 0;
+	expected = game->map.collectibles + game->map.exit; // Count collectibles and exit
+	flood_fill(temp_map, game->map.player_x, game->map.player_y, &count);
+	i = 0;
+	while (i < game->map.height)
+		free(temp_map[i++]);
+	free(temp_map);
+	return (count == expected);
+}
+
+int validate_map(t_game *game)
+{
+	if (!check_characters(game))
+	{
+		write(2, "Error\nInvalid map characters or missing elements\n", 49);
+		return (0);
+	}
+	if (!check_walls(game))
+	{
+		write(2, "Error\nMap must be surrounded by walls\n", 38);
+		return (0);
+	}
+	if (!check_path(game))
+	{
+		write(2, "Error\nInvalid path in map\n", 26);
+		return (0);
+	}
+	return (1);
+}
+
+
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    so_long.h.txt                                      :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 08:18:36 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:48:03 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#ifndef SO_LONG_H
+# define SO_LONG_H
+
+
+# include "../MLX42/include/MLX42/MLX42.h"
+// # include "/home/riad/MLX42/include/MLX42/MLX42.h"
+# include <stdlib.h>
+# include <unistd.h>
+# include <fcntl.h>
+# include "../libft/libft.h"
+# include "../libft/get_next_line/get_next_line.h"
+# include <stdio.h>
+#define TILE_SIZE 64
+#define WINDOW_WIDTH 500
+#define WINDOW_HEIGHT 500
+
+
+typedef struct s_img
+{
+	void	*img;
+	char	*addr;
+	int		bits_per_pixel;
+	int		line_length;
+	int		endian;
+	int		width;
+	int		height;
+}		t_img;
+
+typedef struct s_map
+{
+	char	**grid;
+	int		width;
+	int		height;
+	int		collectibles;
+	int		collected;
+	int		exit;
+	int		player;
+	int		player_x;
+	int		player_y;
+}		t_map;
+
+// typedef struct s_game
+// {
+//     // Existing variables...
+
+//     // Player animation
+//     mlx_image_t **player_down_frames; // Array of frames for down animation
+//     mlx_image_t **player_up_frames;   // Array of frames for up animation
+//     mlx_image_t **player_left_frames; // Array of frames for left animation
+//     mlx_image_t **player_right_frames; // Array of frames for right animation
+//     int player_current_frame;         // Current frame index
+//     int player_animation_timer;       // Timer for frame updates
+
+//     // Collectible animation
+//     mlx_image_t **collectible_frames; // Array of frames for collectible animation
+//     int collectible_current_frame;    // Current frame index
+//     int collectible_animation_timer;  // Timer for frame updates
+
+//     // Other variables...
+// } t_game;
+
+typedef struct s_game
+{
+    mlx_t       *mlx;           // MLX42 window
+    mlx_image_t *player_img;    // Player sprite
+    mlx_image_t *wall_img;      // Wall sprite
+    mlx_image_t *collectible_img; // Collectible sprite
+    mlx_image_t *exit_img;      // Exit sprite
+    mlx_image_t *floor_img;     // Floor sprite
+
+    // Animation sprites for player
+    mlx_image_t *player_up;
+    mlx_image_t *player_down;
+    mlx_image_t *player_left;
+    mlx_image_t *player_right;
+    int         player_direction; // 0=down, 1=up, 2=left, 3=right
+
+    // Image tracking
+    int wall_count;
+    int collectible_count;
+    int exit_count;
+
+
+
+
+    t_map       map;            // Map data
+    int         moves;          // Move counter
+
+    // Player animation
+    mlx_image_t **player_down_frames; // Array of frames for down animation
+    mlx_image_t **player_up_frames;   // Array of frames for up animation
+    mlx_image_t **player_left_frames; // Array of frames for left animation
+    mlx_image_t **player_right_frames; // Array of frames for right animation
+    int player_current_frame;         // Current frame index
+    int player_animation_timer;      // Timer for frame updates
+
+
+
+    // Collectible animation
+    mlx_image_t **collectible_frames; // Array of frames for collectible animation
+    int collectible_current_frame;    // Current frame index
+    int collectible_animation_timer;  // Timer for frame updates
+
+
+
+
+
+
+
+
+
+} t_game;
+
+// Add direction constants
+#define DIR_DOWN 0
+#define DIR_UP 1
+#define DIR_LEFT 2
+#define DIR_RIGHT 3
+
+
+
+
+int		parse_map(t_game *game, char *map_path);
+int		validate_map(t_game *game);
+
+void move_player(t_game *game, int dx, int dy);
+void handle_keypress(mlx_key_data_t keydata, void *param);
+void render_map(t_game *game);
+void init_game(t_game *game);
+
+
+void	free_game(t_game *game);
+void	exit_with_error(char *message);
+int		handle_window_close(t_game *game);
+void update_render_map(t_game *game);
+
+
+void load_assets(t_game *game);
+void game_loop(void *param);
+
+void update_player_sprite(t_game *game);
+void update_collectible_sprites(t_game *game);
+
+
+
+#endif
+
+
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    textures_in.txt                                    :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2025/03/17 14:33:11 by riel-fas          #+#    #+#              #
+#    Updated: 2025/03/18 12:48:22 by riel-fas         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include "so_long.h"
+
+// void load_assets(t_game *game)
+// {
+//     // Load player sprite
+//     game->player_img = mlx_load_png("textures/player/frame66.png");
+//     if (!game->player_img)
+//         exit_with_error("ERROR: Failed to load player sprite.");
+
+//     // Load wall sprite
+//     game->wall_img = mlx_load_png("textures/1/wall2.png");
+//     if (!game->wall_img)
+//         exit_with_error("ERROR: Failed to load wall sprite.");
+
+//     // Load collectible sprite
+//     game->collectible_img = mlx_load_png("textures/collectibles/coin_gold1.png");
+//     if (!game->collectible_img)
+//         exit_with_error("ERROR: Failed to load collectible sprite.");
+
+//     // Load exit sprite
+//     game->exit_img = mlx_load_png("textures/1/wall4.png");
+//     if (!game->exit_img)
+//         exit_with_error("ERROR: Failed to load exit sprite.");
+
+//     // Load floor sprite
+//     game->floor_img = mlx_load_png("textures/0/tile_004055.png");
+//     if (!game->floor_img)
+//         exit_with_error("ERROR: Failed to load floor sprite.");
+
+//     // Debug print
+//     printf("Assets loaded successfully.\n");
+// }
+
+// #include "so_long.h"
+
+// void load_assets(t_game *game)
+// {
+//     mlx_texture_t *texture;
+
+//     // Load player sprite
+//     texture = mlx_load_png("textures/player/frame66.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load player sprite.");
+//     game->player_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load wall sprite
+//     texture = mlx_load_png("textures/1/wall2.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load wall sprite.");
+//     game->wall_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load collectible sprite
+//     texture = mlx_load_png("textures/collectibles/coin_gold1.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load collectible sprite.");
+//     game->collectible_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+// 	// game->collectible_img->enabled = false;
+
+
+
+//     // Load exit sprite
+//     texture = mlx_load_png("textures/1/wall4.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load exit sprite.");
+//     game->exit_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load floor sprite
+//     texture = mlx_load_png("textures/0/tile_004055.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load floor sprite.");
+//     game->floor_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Debug print
+//     printf("Assets loaded successfully.\n");
+// }
+
+// void load_assets(t_game *game)
+// {
+//     mlx_texture_t *texture;
+
+//     // Load player sprites for different directions (multiple frames)
+//     game->player_down_frames = malloc(sizeof(mlx_image_t *) * 2); // 4 frames for down animation
+//     for (int i = 0; i < 2; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_down/char_run down_%d.png", i);
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player down sprite.");
+//         game->player_down_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->player_up_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for up animation
+//     for (int i = 0; i < 4; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_up/char_run up_%d.png", i);
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player up sprite.");
+//         game->player_up_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->player_left_frames = malloc(sizeof(mlx_image_t *) * 5); // 4 frames for left animation
+//     for (int i = 0; i < 5; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_left/char_run left_%d.png", i);
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player left sprite.");
+//         game->player_left_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->player_right_frames = malloc(sizeof(mlx_image_t *) * 5); // 4 frames for right animation
+//     for (int i = 0; i < 5; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_right/char_run right_%d.png", i);
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player right sprite.");
+//         game->player_right_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     // Set initial player direction and active sprite
+//     game->player_direction = DIR_DOWN;
+//     game->player_current_frame = 0;
+//     game->player_animation_timer = 0;
+
+//     // Load collectible sprites (multiple frames)
+//     game->collectible_frames = malloc(sizeof(mlx_image_t *) * 7); // 4 frames for collectible animation
+//     for (int i = 0; i < 7; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/collectibles/coin_gold%d.png", i);
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load collectible sprite.");
+//         game->collectible_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->collectible_current_frame = 0;
+//     game->collectible_animation_timer = 0;
+
+//     // Load wall sprite
+//     texture = mlx_load_png("textures/1/wall2.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load wall sprite.");
+//     game->wall_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load floor sprite
+//     texture = mlx_load_png("textures/0/tile_004055.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load floor sprite.");
+//     game->floor_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load exit sprite
+//     texture = mlx_load_png("textures/1/wall4.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load exit sprite.");
+//     game->exit_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Initialize counters
+//     game->wall_count = 0;
+//     game->collectible_count = 0;
+//     game->exit_count = 0;
+
+//     // Debug print
+//     printf("Assets loaded successfully.\n");
+// }
+
+
+// void load_assets(t_game *game)
+// {
+//     mlx_texture_t *texture;
+
+//     // Load player sprites for different directions (multiple frames)
+//     game->player_down_frames = malloc(sizeof(mlx_image_t *) * 4); // 2 frames for down animation
+//     for (int i = 0; i < 4; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_down/char_rundown_%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player down sprite.");
+//         game->player_down_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->player_up_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for up animation
+//     for (int i = 0; i < 4; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_up/char_runup_%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player up sprite.");
+//         game->player_up_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->player_left_frames = malloc(sizeof(mlx_image_t *) * 4); // 5 frames for left animation
+//     for (int i = 0; i < 4; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_left/char_runleft_%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player left sprite.");
+//         game->player_left_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->player_right_frames = malloc(sizeof(mlx_image_t *) * 4); // 5 frames for right animation
+//     for (int i = 0; i < 4; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_right/char_runright_%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load player right sprite.");
+//         game->player_right_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     // Set initial player direction and active sprite
+//     game->player_direction = DIR_DOWN;
+//     game->player_current_frame = 0;
+//     game->player_animation_timer = 0;
+
+//     // Load collectible sprites (multiple frames)
+//     game->collectible_frames = malloc(sizeof(mlx_image_t *) * 7); // 7 frames for collectible animation
+//     for (int i = 0; i < 7; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/collectibles/coin_gold%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture)
+//             exit_with_error("ERROR: Failed to load collectible sprite.");
+//         game->collectible_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->collectible_current_frame = 0;
+//     game->collectible_animation_timer = 0;
+
+//     // Load wall sprite
+//     printf("Loading texture: textures/1/wall2.png\n"); // Debug print
+//     texture = mlx_load_png("textures/1/wall2.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load wall sprite.");
+//     game->wall_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load floor sprite
+//     printf("Loading texture: textures/0/tile_004055.png\n"); // Debug print
+//     texture = mlx_load_png("textures/0/tile_004055.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load floor sprite.");
+//     game->floor_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load exit sprite
+//     printf("Loading texture: textures/1/wall4.png\n"); // Debug print
+//     texture = mlx_load_png("textures/1/wall4.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load exit sprite.");
+//     game->exit_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Initialize counters
+//     game->wall_count = 0;
+//     game->collectible_count = 0;
+//     game->exit_count = 0;
+
+//     // Debug print
+//     printf("Assets loaded successfully.\n");
+// }
+
+void load_assets(t_game *game)
+{
+    mlx_texture_t *texture;
+
+    // Load player sprites for different directions (multiple frames)
+    game->player_down_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for down animation
+    for (int i = 0; i < 4; i++) {
+        char path[100];
+        snprintf(path, sizeof(path), "textures/player/player_down/char_rundown_%d.png", i);
+        texture = mlx_load_png(path);
+        if (!texture)
+            exit_with_error("ERROR: Failed to load player down sprite.");
+        game->player_down_frames[i] = mlx_texture_to_image(game->mlx, texture);
+        mlx_delete_texture(texture);
+    }
+
+    game->player_up_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for up animation
+    for (int i = 0; i < 4; i++) {
+        char path[100];
+        snprintf(path, sizeof(path), "textures/player/player_up/char_runup_%d.png", i);
+        texture = mlx_load_png(path);
+        if (!texture)
+            exit_with_error("ERROR: Failed to load player up sprite.");
+        game->player_up_frames[i] = mlx_texture_to_image(game->mlx, texture);
+        mlx_delete_texture(texture);
+    }
+
+    game->player_left_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for left animation
+    for (int i = 0; i < 4; i++) {
+        char path[100];
+        snprintf(path, sizeof(path), "textures/player/player_left/char_runleft_%d.png", i);
+        texture = mlx_load_png(path);
+        if (!texture)
+            exit_with_error("ERROR: Failed to load player left sprite.");
+        game->player_left_frames[i] = mlx_texture_to_image(game->mlx, texture);
+        mlx_delete_texture(texture);
+    }
+
+    game->player_right_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for right animation
+    for (int i = 0; i < 4; i++) {
+        char path[100];
+        snprintf(path, sizeof(path), "textures/player/player_right/char_runright_%d.png", i);
+        texture = mlx_load_png(path);
+        if (!texture)
+            exit_with_error("ERROR: Failed to load player right sprite.");
+        game->player_right_frames[i] = mlx_texture_to_image(game->mlx, texture);
+        mlx_delete_texture(texture);
+    }
+
+    // Set initial player direction and active sprite
+    game->player_direction = DIR_DOWN;
+    game->player_current_frame = 0;
+    game->player_animation_timer = 0;
+
+    // Load collectible sprites (multiple frames)
+    game->collectible_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for collectible animation
+    for (int i = 0; i < 4; i++) {
+        char path[100];
+        snprintf(path, sizeof(path), "textures/collectibles/coin_gold%d.png", i);
+        texture = mlx_load_png(path);
+        if (!texture)
+            exit_with_error("ERROR: Failed to load collectible sprite.");
+        game->collectible_frames[i] = mlx_texture_to_image(game->mlx, texture);
+        mlx_delete_texture(texture);
+    }
+
+    game->collectible_current_frame = 0;
+    game->collectible_animation_timer = 0;
+
+    // Load wall sprite
+    texture = mlx_load_png("textures/1/wall2.png");
+    if (!texture)
+        exit_with_error("ERROR: Failed to load wall sprite.");
+    game->wall_img = mlx_texture_to_image(game->mlx, texture);
+    mlx_delete_texture(texture);
+
+    // Load floor sprite
+    texture = mlx_load_png("textures/0/tile_004055.png");
+    if (!texture)
+        exit_with_error("ERROR: Failed to load floor sprite.");
+    game->floor_img = mlx_texture_to_image(game->mlx, texture);
+    mlx_delete_texture(texture);
+
+    // Load exit sprite
+    texture = mlx_load_png("textures/1/wall4.png");
+    if (!texture)
+        exit_with_error("ERROR: Failed to load exit sprite.");
+    game->exit_img = mlx_texture_to_image(game->mlx, texture);
+    mlx_delete_texture(texture);
+
+    // Initialize counters
+    game->wall_count = 0;
+    game->collectible_count = 0;
+    game->exit_count = 0;
+
+    // Debug print
+    printf("Assets loaded successfully.\n");
+}
+
+
+
+// void load_assets(t_game *game)
+// {
+//     mlx_texture_t *texture;
+
+//     // Load player sprites for different directions (multiple frames)
+//     game->player_down_frames = malloc(sizeof(mlx_image_t *) * 4); // 4 frames for down animation
+//     if (!game->player_down_frames) {
+//         exit_with_error("ERROR: Failed to allocate memory for player down frames.");
+//     }
+//     for (int i = 0; i < 4; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/player/player_down/char_rundown_%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture) {
+//             exit_with_error("ERROR: Failed to load player down sprite.");
+//         }
+//         game->player_down_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         if (!game->player_down_frames[i]) {
+//             exit_with_error("ERROR: Failed to convert texture to image for player down sprite.");
+//         }
+//         mlx_delete_texture(texture);
+//     }
+
+//     // Repeat similar checks for other frames...
+
+//     // Set initial player direction and active sprite
+//     game->player_direction = DIR_DOWN;
+//     game->player_current_frame = 0;
+//     game->player_animation_timer = 0;
+
+//     // Load collectible sprites (multiple frames)
+//     game->collectible_frames = malloc(sizeof(mlx_image_t *) * 7); // 7 frames for collectible animation
+//     if (!game->collectible_frames) {
+//         exit_with_error("ERROR: Failed to allocate memory for collectible frames.");
+//     }
+//     for (int i = 0; i < 7; i++) {
+//         char path[100];
+//         snprintf(path, sizeof(path), "textures/collectibles/coin_gold%d.png", i);
+//         printf("Loading texture: %s\n", path); // Debug print
+//         texture = mlx_load_png(path);
+//         if (!texture) {
+//             exit_with_error("ERROR: Failed to load collectible sprite.");
+//         }
+//         game->collectible_frames[i] = mlx_texture_to_image(game->mlx, texture);
+//         if (!game->collectible_frames[i]) {
+//             exit_with_error("ERROR: Failed to convert texture to image for collectible sprite.");
+//         }
+//         mlx_delete_texture(texture);
+//     }
+
+//     game->collectible_current_frame = 0;
+//     game->collectible_animation_timer = 0;
+
+//     // Load wall sprite
+//     printf("Loading texture: textures/1/wall2.png\n"); // Debug print
+//     texture = mlx_load_png("textures/1/wall2.png");
+//     if (!texture) {
+//         exit_with_error("ERROR: Failed to load wall sprite.");
+//     }
+//     game->wall_img = mlx_texture_to_image(game->mlx, texture);
+//     if (!game->wall_img) {
+//         exit_with_error("ERROR: Failed to convert texture to image for wall sprite.");
+//     }
+//     mlx_delete_texture(texture);
+
+//     // Load floor sprite
+//     printf("Loading texture: textures/0/tile_004055.png\n"); // Debug print
+//     texture = mlx_load_png("textures/0/tile_004055.png");
+//     if (!texture) {
+//         exit_with_error("ERROR: Failed to load floor sprite.");
+//     }
+//     game->floor_img = mlx_texture_to_image(game->mlx, texture);
+//     if (!game->floor_img) {
+//         exit_with_error("ERROR: Failed to convert texture to image for floor sprite.");
+//     }
+//     mlx_delete_texture(texture);
+
+//     // Load exit sprite
+//     printf("Loading texture: textures/1/wall4.png\n"); // Debug print
+//     texture = mlx_load_png("textures/1/wall4.png");
+//     if (!texture) {
+//         exit_with_error("ERROR: Failed to load exit sprite.");
+//     }
+//     game->exit_img = mlx_texture_to_image(game->mlx, texture);
+//     if (!game->exit_img) {
+//         exit_with_error("ERROR: Failed to convert texture to image for exit sprite.");
+//     }
+//     mlx_delete_texture(texture);
+
+//     // Initialize counters
+//     game->wall_count = 0;
+//     game->collectible_count = 0;
+//     game->exit_count = 0;
+
+//     // Debug print
+//     printf("Assets loaded successfully.\n");
+// }
+
+
+// void load_assets(t_game *game)
+// {
+//     mlx_texture_t *texture;
+
+//     // Load player sprites for different directions
+//     texture = mlx_load_png("textures/player/player_down/char_run down_2.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load player down sprite.");
+//     game->player_down = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     texture = mlx_load_png("textures/player/player_up/char_run up_0.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load player up sprite.");
+//     game->player_up = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     texture = mlx_load_png("textures/player/player_left/char_run left_0.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load player left sprite.");
+//     game->player_left = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     texture = mlx_load_png("textures/player/player_right/char_run right_0.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load player right sprite.");
+//     game->player_right = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Set initial player direction and active sprite
+//     game->player_direction = DIR_DOWN;
+//     game->player_img = game->player_down;
+
+//     // Load wall sprite
+//     texture = mlx_load_png("textures/1/wall2.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load wall sprite.");
+//     game->wall_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load collectible sprite
+//     texture = mlx_load_png("textures/collectibles/coin_gold4.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load collectible sprite.");
+//     game->collectible_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load exit sprite
+//     texture = mlx_load_png("textures/1/wall1.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load exit sprite.");
+//     game->exit_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Load floor sprite
+//     texture = mlx_load_png("textures/0/tile_004055.png");
+//     if (!texture)
+//         exit_with_error("ERROR: Failed to load floor sprite.");
+//     game->floor_img = mlx_texture_to_image(game->mlx, texture);
+//     mlx_delete_texture(texture);
+
+//     // Initialize counters
+//     game->wall_count = 0;
+//     game->collectible_count = 0;
+//     game->exit_count = 0;
+
+//     // Debug print
+//     printf("Assets loaded successfully.\n");
+// }
+
+// void update_player_sprite(t_game *game)
+// {
+//     // Update player position for all directional sprites
+//     game->player_down->instances[0].x = game->map.player_x * TILE_SIZE;
+//     game->player_down->instances[0].y = game->map.player_y * TILE_SIZE;
+//     game->player_up->instances[0].x = game->map.player_x * TILE_SIZE;
+//     game->player_up->instances[0].y = game->map.player_y * TILE_SIZE;
+//     game->player_left->instances[0].x = game->map.player_x * TILE_SIZE;
+//     game->player_left->instances[0].y = game->map.player_y * TILE_SIZE;
+//     game->player_right->instances[0].x = game->map.player_x * TILE_SIZE;
+//     game->player_right->instances[0].y = game->map.player_y * TILE_SIZE;
+
+//     // Enable only the current direction sprite
+//     game->player_down->instances[0].enabled = (game->player_direction == DIR_DOWN);
+//     game->player_up->instances[0].enabled = (game->player_direction == DIR_UP);
+//     game->player_left->instances[0].enabled = (game->player_direction == DIR_LEFT);
+//     game->player_right->instances[0].enabled = (game->player_direction == DIR_RIGHT);
+// }
+
+
+void update_player_sprite(t_game *game)
+{
+    // Disable all player frames
+    for (int i = 0; i < 4; i++) {
+        if (game->player_down_frames[i]) game->player_down_frames[i]->instances[0].enabled = false;
+        if (game->player_up_frames[i]) game->player_up_frames[i]->instances[0].enabled = false;
+        if (game->player_left_frames[i]) game->player_left_frames[i]->instances[0].enabled = false;
+        if (game->player_right_frames[i]) game->player_right_frames[i]->instances[0].enabled = false;
+    }
+
+    // Enable the current frame based on direction
+    if (game->player_direction == DIR_DOWN) {
+        game->player_down_frames[game->player_current_frame]->instances[0].enabled = true;
+    } else if (game->player_direction == DIR_UP) {
+        game->player_up_frames[game->player_current_frame]->instances[0].enabled = true;
+    } else if (game->player_direction == DIR_LEFT) {
+        game->player_left_frames[game->player_current_frame]->instances[0].enabled = true;
+    } else if (game->player_direction == DIR_RIGHT) {
+        game->player_right_frames[game->player_current_frame]->instances[0].enabled = true;
+    }
+
+    // Update player position for all directional sprites
+    int x = game->map.player_x * TILE_SIZE;
+    int y = game->map.player_y * TILE_SIZE;
+    for (int i = 0; i < 4; i++) {
+        if (game->player_down_frames[i]) {
+            game->player_down_frames[i]->instances[0].x = x;
+            game->player_down_frames[i]->instances[0].y = y;
+        }
+        if (game->player_up_frames[i]) {
+            game->player_up_frames[i]->instances[0].x = x;
+            game->player_up_frames[i]->instances[0].y = y;
+        }
+        if (game->player_left_frames[i]) {
+            game->player_left_frames[i]->instances[0].x = x;
+            game->player_left_frames[i]->instances[0].y = y;
+        }
+        if (game->player_right_frames[i]) {
+            game->player_right_frames[i]->instances[0].x = x;
+            game->player_right_frames[i]->instances[0].y = y;
+        }
+    }
+}
+
+void update_collectible_sprites(t_game *game)
+{
+    int i = 0;
+    for (int y = 0; y < game->map.height; y++) {
+        for (int x = 0; x < game->map.width; x++) {
+            if (game->map.grid[y][x] == 'C' && i < game->collectible_count) {
+                game->collectible_frames[game->collectible_current_frame]->instances[i].enabled = true;
+                i++;
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
