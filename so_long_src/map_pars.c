@@ -6,7 +6,7 @@
 /*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:37:55 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/18 12:13:15 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/18 14:20:56 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,29 +42,48 @@ static int	map_dimensions(t_game *game, char *map_path)
 	return (1);
 }
 
-static int	map_alloc(t_game *game)
+static int map_alloc(t_game *game)
 {
-	int	x;
-
-	game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
-	if (!game->map.grid)
-		return (0);
-	x = 0;
-	while (x < game->map.height)
-	{
-		game->map.grid[x] = malloc(sizeof(char) * (game->map.width + 1));
-		if (!game->map.grid[x])
-		{
-			while (--x >= 0)
-				free(game->map.grid[x]);
-			free(game->map.grid);
-			return (0);
-		}
-		x++;
-	}
-	game->map.grid[game->map.height] = NULL;
-	return (1);
+    game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
+    if (!game->map.grid)
+        return (0);
+    for (int i = 0; i < game->map.height; i++) {
+        game->map.grid[i] = malloc(sizeof(char) * (game->map.width + 1));
+        if (!game->map.grid[i]) {
+            while (--i >= 0)
+                free(game->map.grid[i]);
+            free(game->map.grid);
+            return (0);
+        }
+    }
+    game->map.grid[game->map.height] = NULL;
+    return (1);
 }
+
+
+// static int	map_alloc(t_game *game)
+// {
+// 	int	x;
+
+// 	game->map.grid = malloc(sizeof(char *) * (game->map.height + 1));
+// 	if (!game->map.grid)
+// 		return (0);
+// 	x = 0;
+// 	while (x < game->map.height)
+// 	{
+// 		game->map.grid[x] = malloc(sizeof(char) * (game->map.width + 1));
+// 		if (!game->map.grid[x])
+// 		{
+// 			while (--x >= 0)
+// 				free(game->map.grid[x]);
+// 			free(game->map.grid);
+// 			return (0);
+// 		}
+// 		x++;
+// 	}
+// 	game->map.grid[game->map.height] = NULL;
+// 	return (1);
+// }
 
 static int	read_map_content(t_game *game, char *map_path)
 {
@@ -96,65 +115,65 @@ static int	read_map_content(t_game *game, char *map_path)
 	return (x);
 }
 
-// int parse_map(t_game *game, char *map_path)
-// {
-// 	game->map.collectibles = 0;
-// 	game->map.collected = 0;
-// 	game->map.exit = 0;
-// 	game->map.player = 0;
-// 	if (!map_dimensions(game, map_path))
-// 	{
-// 		write(2, "Error\nFailed to read map file\n", 30);
-// 		return (0);
-// 	}
-// 	if (!map_alloc(game))
-// 	{
-// 		write(2, "Error\nMemory allocation failed\n", 31);
-// 		return (0);
-// 	}
-// 	if (!read_map_content(game, map_path))
-// 	{
-// 		write(2, "Error\nFailed to read map content\n", 33);
-// 		free_game(game); // You'll need to implement this function
-// 		return (0);
-// 	}
-// 	if (!validate_map(game))
-// 	{
-// 		free_game(game);
-// 		return (0);
-// 	}
-// 	return (1);
-// }
-
-
 int parse_map(t_game *game, char *map_path)
 {
-    game->map.collectibles = 0;
-    game->map.collected = 0;
-    game->map.exit = 0;
-    game->map.player = 0;
-    if (!map_dimensions(game, map_path))
-    {
-        write(2, "Error\nFailed to read map file\n", 30);
-        return (0);
-    }
-    if (!map_alloc(game))
-    {
-        write(2, "Error\nMemory allocation failed\n", 31);
-        return (0);
-    }
-    if (!read_map_content(game, map_path))
-    {
-        write(2, "Error\nFailed to read map content\n", 33);
-        free_game(game); // You'll need to implement this function
-        return (0);
-    }
-    if (!validate_map(game))
-    {
-        free_game(game);
-        return (0);
-    }
-
-    printf("Player position: (%d, %d)\n", game->map.player_x, game->map.player_y);
-    return (1);
+	game->map.collectibles = 0;
+	game->map.collected = 0;
+	game->map.exit = 0;
+	game->map.player = 0;
+	if (!map_dimensions(game, map_path))
+	{
+		write(2, "Error\nFailed to read map file\n", 30);
+		return (0);
+	}
+	if (!map_alloc(game))
+	{
+		write(2, "Error\nMemory allocation failed\n", 31);
+		return (0);
+	}
+	if (!read_map_content(game, map_path))
+	{
+		write(2, "Error\nFailed to read map content\n", 33);
+		free_game(game); // You'll need to implement this function
+		return (0);
+	}
+	if (!validate_map(game))
+	{
+		free_game(game);
+		return (0);
+	}
+	return (1);
 }
+
+
+// int parse_map(t_game *game, char *map_path)
+// {
+//     game->map.collectibles = 0;
+//     game->map.collected = 0;
+//     game->map.exit = 0;
+//     game->map.player = 0;
+//     if (!map_dimensions(game, map_path))
+//     {
+//         write(2, "Error\nFailed to read map file\n", 30);
+//         return (0);
+//     }
+//     if (!map_alloc(game))
+//     {
+//         write(2, "Error\nMemory allocation failed\n", 31);
+//         return (0);
+//     }
+//     if (!read_map_content(game, map_path))
+//     {
+//         write(2, "Error\nFailed to read map content\n", 33);
+//         free_game(game); // You'll need to implement this function
+//         return (0);
+//     }
+//     if (!validate_map(game))
+//     {
+//         free_game(game);
+//         return (0);
+//     }
+
+//     printf("Player position: (%d, %d)\n", game->map.player_x, game->map.player_y);
+//     return (1);
+// }

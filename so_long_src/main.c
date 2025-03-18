@@ -6,7 +6,7 @@
 /*   By: riel-fas <riel-fas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 08:24:15 by riel-fas          #+#    #+#             */
-/*   Updated: 2025/03/18 09:11:17 by riel-fas         ###   ########.fr       */
+/*   Updated: 2025/03/18 14:19:39 by riel-fas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,26 @@ void init_game(t_game *game)
 
     printf("Game initialized successfully.\n");
 }
+
+
+// void init_game(t_game *game)
+// {
+//     game->mlx = mlx_init(game->map.width * TILE_SIZE, game->map.height * TILE_SIZE, "so_long", false);
+//     if (!game->mlx)
+//         exit_with_error("ERROR: Failed to initialize MLX.");
+
+//     load_assets(game);
+//     game->moves = 0;
+
+//     // Initialize the map rendering (create all image instances)
+//     render_map(game);
+
+//     // Set up the game loop
+//     mlx_loop_hook(game->mlx, game_loop, game);
+
+//     printf("Game initialized successfully.\n");
+// }
+
 
 int main(int argc, char **argv)
 {
